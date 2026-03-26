@@ -1,0 +1,40 @@
+name: Auto Update Movie Data
+
+on:
+  schedule:
+    # Tự động chạy vào lúc 00:00 Chủ Nhật hàng tuần (Giờ chuẩn UTC)
+    - cron: '0 0 * * 0' 
+  workflow_dispatch: # Tạo một nút bấm để bạn có thể test thử bằng tay bất cứ lúc nào
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Cho phép Bot được quyền lưu đè file CSV mới lên kho code
+
+    steps:
+      - name: 📥 Lấy code từ kho chứa
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Cài đặt môi trường Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 📦 Cài đặt thư viện (Dependencies)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🚀 Chạy siêu động cơ cào phim và phân cụm K-Means
+        run: python auto_pipeline.py
+
+      - name: 💾 Lưu file CSV mới và đẩy lên GitHub (Commit & Push)
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add movies_with_clusters.csv
+          
+          # Nếu có phim mới thì lưu lại, nếu không có gì thay đổi thì bỏ qua để tránh lỗi báo đỏ
+          git diff --quiet && git diff --staged --quiet || git commit -m "🤖 Auto-update: Cập nhật phim mới và train lại thuật toán"
+          git push
