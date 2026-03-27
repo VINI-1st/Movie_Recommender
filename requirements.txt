@@ -1,6 +1,7 @@
 requests
 pandas
 scikit-learn
-streamlit
+streamlit>=1.30.0
 plotly
 streamlit-option-menu
+altair
